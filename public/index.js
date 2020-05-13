@@ -1,7 +1,27 @@
+import { useIndexedDb } from "./indexedDb.js";
 let transactions = [];
 let myChart;
 
-fetch("/api/transaction")
+useIndexedDb("transactions","TransactionStore","get").then(results=>{
+  results.forEach(element=>{
+    let transaction = {
+      name: element.name,
+      value: element.value,
+      date: element.date
+    };
+    fetch("/api/transaction", {
+      method: "POST",
+      body: JSON.stringify(transaction),
+      headers: {
+        Accept: "application/json, text/plain, */*",
+        "Content-Type": "application/json"
+      }
+    })
+    .then(response => {    
+      return response.json();
+    })
+  })
+  fetch("/api/transaction")
   .then(response => {
     return response.json();
   })
@@ -12,7 +32,12 @@ fetch("/api/transaction")
     populateTotal();
     populateTable();
     populateChart();
+    useIndexedDb("transactions","TransactionStore","clear");
   });
+})
+
+
+
 
 function populateTotal() {
   // reduce transaction amounts to a single total value
@@ -150,4 +175,10 @@ document.querySelector("#add-btn").onclick = function() {
 
 document.querySelector("#sub-btn").onclick = function() {
   sendTransaction(false);
+};
+
+function saveRecord(transaction){
+  useIndexedDb("transactions","TransactionStore","put",transaction);
+  // console.log("clearing");
+  // useIndexedDb("transactions","TransactionStore","clear");
 };
